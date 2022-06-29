@@ -89,8 +89,8 @@ public class TradingEntity extends BaseEntity {
     @ApiModelProperty(value = "备注【订单门店，桌台信息】")
     private String memo;
 
-    @ApiModelProperty(value = "二维码路径")
-    private String qrCodeUrl;
+    @ApiModelProperty(value = "二维码base64数据")
+    private String qrCode;
 
     @ApiModelProperty(value = "是否有效")
     protected String enableFlag;

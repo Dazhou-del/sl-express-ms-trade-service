@@ -22,6 +22,15 @@ public interface PayChannelService extends IService<PayChannelEntity> {
     Page<PayChannelEntity> findPayChannelPage(PayChannelDTO payChannelDTO, int pageNum, int pageSize);
 
     /**
+     * 根据商户id查询渠道配置，该配置会被缓存10分钟
+     *
+     * @param enterpriseId 商户id
+     * @param channelLabel 通道唯一标记
+     * @return PayChannelEntity 交易渠道对象
+     */
+    PayChannelEntity findByEnterpriseId(Long enterpriseId, String channelLabel);
+
+    /**
      * @param payChannelDTO 对象信息
      * @return PayChannelEntity 交易渠道对象
      * @Description 创建支付通道

@@ -30,7 +30,7 @@ public class RefundRecordEntity extends BaseEntity {
     private Long productOrderNo;
 
     @ApiModelProperty(value = "本次退款订单号")
-    private String refundNo;
+    private Long refundNo;
 
     @ApiModelProperty(value = "商户号")
     private Long enterpriseId;
@@ -55,6 +55,9 @@ public class RefundRecordEntity extends BaseEntity {
 
     @ApiModelProperty(value = "本次退款金额")
     private BigDecimal refundAmount;
+
+    @ApiModelProperty(value = "原订单金额")
+    private BigDecimal total;
 
 
 }

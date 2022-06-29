@@ -54,4 +54,7 @@ public class PayChannelEntity extends BaseEntity {
     @ApiModelProperty(value = "是否有效")
     protected String enableFlag;
 
+    @ApiModelProperty(value = "商户号")
+    private Long enterpriseId;
+
 }

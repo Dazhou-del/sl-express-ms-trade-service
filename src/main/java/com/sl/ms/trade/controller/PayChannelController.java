@@ -1,9 +1,6 @@
 package com.sl.ms.trade.controller;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.sl.ms.trade.domain.OtherConfig;
 import com.sl.ms.trade.domain.PayChannelDTO;
 import com.sl.ms.trade.entity.PayChannelEntity;
 import com.sl.ms.trade.service.PayChannelService;
@@ -26,7 +23,7 @@ import javax.annotation.Resource;
 @RestController
 @RequestMapping("payChannel")
 @Slf4j
-@Api(tags = "支付通道controller")
+@Api(tags = "支付通道")
 public class PayChannelController {
 
     @Resource
@@ -50,14 +47,7 @@ public class PayChannelController {
             @PathVariable("pageNum") int pageNum,
             @PathVariable("pageSize") int pageSize) {
         Page<PayChannelEntity> payChannelVoPage = payChannelService.findPayChannelPage(payChannelDTO, pageNum, pageSize);
-        PageResponse<PayChannelDTO> pageResponse = new PageResponse<>(payChannelVoPage, PayChannelDTO.class);
-        pageResponse.getItems().forEach(dto -> {
-            if (StrUtil.isNotEmpty(dto.getOtherConfig())) {
-                dto.setOtherConfigs(JSONUtil.toList(dto.getOtherConfig(), OtherConfig.class));
-            }
-        });
-
-        return pageResponse;
+        return new PageResponse<>(payChannelVoPage, PayChannelDTO.class);
     }
 
     /**

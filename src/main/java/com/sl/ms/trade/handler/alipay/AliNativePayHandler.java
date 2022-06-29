@@ -1,0 +1,75 @@
+package com.sl.ms.trade.handler.alipay;
+
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.json.JSONUtil;
+import com.alipay.easysdk.factory.Factory;
+import com.alipay.easysdk.kernel.Config;
+import com.alipay.easysdk.kernel.util.ResponseChecker;
+import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
+import com.sl.ms.trade.constant.Constants;
+import com.sl.ms.trade.constant.TradingConstant;
+import com.sl.ms.trade.domain.TradingDTO;
+import com.sl.ms.trade.enums.PayChannelEnum;
+import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.handler.NativePayHandler;
+import com.sl.ms.trade.service.PayChannelService;
+import com.sl.transport.common.exception.SLException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+
+/**
+ * @author zzj
+ * @version 1.0
+ */
+@Slf4j
+@Component("aliNativePayHandler")
+public class AliNativePayHandler implements NativePayHandler {
+
+    @Resource
+    private PayChannelService payChannelService;
+
+    @Override
+    public void createDownLineTrading(TradingDTO tradingDTO) throws SLException {
+        //查询配置
+        Config config = AlipayConfig.getConfig(tradingDTO.getEnterpriseId());
+        //Factory使用配置
+        Factory.setOptions(config);
+        AlipayTradePrecreateResponse response;
+        try {
+            //调用支付宝API面对面支付
+            response = Factory
+                    .Payment
+                    .FaceToFace()
+                    .preCreate(tradingDTO.getMemo(), //订单描述
+                            Convert.toStr(tradingDTO.getTradingOrderNo()), //业务订单号
+                            Convert.toStr(tradingDTO.getTradingAmount())); //金额
+        } catch (Exception e) {
+            log.error("支付宝统一下单创建失败：{}", ExceptionUtil.stacktraceToString(e));
+            throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
+        }
+
+        //受理结果【只表示请求是否成功，而不是支付是否成功】
+        boolean isSuccess = ResponseChecker.success(response);
+        //6.1、受理成功：修改交易单
+        if (isSuccess) {
+            String subCode = response.getSubCode();
+            String subMsg = response.getQrCode();
+            tradingDTO.setPlaceOrderCode(subCode); //返回的编码
+            tradingDTO.setPlaceOrderMsg(subMsg); //二维码需要展现的信息
+            tradingDTO.setPlaceOrderJson(JSONUtil.toJsonStr(response));
+            tradingDTO.setTradingState(TradingConstant.FKZ);
+            return;
+        }
+        throw new SLException(JSONUtil.toJsonStr(response), Constants.ERROR);
+    }
+
+
+    @Override
+    public PayChannelEnum payChannel() {
+        return PayChannelEnum.ALI_PAY;
+    }
+
+}

@@ -19,6 +19,10 @@
         <maven.compiler.target>11</maven.compiler.target>
         <sl-express-common.version>1.0-SNAPSHOT</sl-express-common.version>
         <sl-express-trade.version>1.0-SNAPSHOT</sl-express-trade.version>
+        <!--支付宝-->
+        <alipay.easysdk.version>2.2.2</alipay.easysdk.version>
+        <!--微信支付-->
+        <wechatpay.version>0.4.7</wechatpay.version>
     </properties>
 
     <dependencies>
@@ -55,6 +59,30 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-easysdk</artifactId>
+            <version>${alipay.easysdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.wechatpay-apiv3</groupId>
+            <artifactId>wechatpay-apache-httpclient</artifactId>
+            <version>${wechatpay.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+        </dependency>
+        <!--二维码生成工具包-->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.0</version>
         </dependency>
     </dependencies>
 

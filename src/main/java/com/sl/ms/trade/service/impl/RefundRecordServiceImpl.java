@@ -8,6 +8,8 @@ import com.sl.ms.trade.mapper.RefundRecordMapper;
 import com.sl.ms.trade.service.RefundRecordService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @Description： 退款记录服务实现类
  */
@@ -15,10 +17,16 @@ import org.springframework.stereotype.Service;
 public class RefundRecordServiceImpl extends ServiceImpl<RefundRecordMapper, RefundRecordEntity> implements RefundRecordService {
 
     @Override
-    public RefundRecordEntity findRefundRecordByProductOrderNoAndSending(Long productOrderNo) {
+    public RefundRecordEntity findByRefundNo(Long refundNo) {
         LambdaQueryWrapper<RefundRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(RefundRecordEntity::getProductOrderNo, productOrderNo)
-                .eq(RefundRecordEntity::getRefundStatus, TradingConstant.REFUND_STATUS_SENDING);
-        return getOne(queryWrapper);
+        queryWrapper.eq(RefundRecordEntity::getRefundNo, refundNo);
+        return super.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<RefundRecordEntity> findList(Long tradingOrderNo) {
+        LambdaQueryWrapper<RefundRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RefundRecordEntity::getTradingOrderNo, tradingOrderNo);
+        return super.list(queryWrapper);
     }
 }

@@ -2,9 +2,7 @@ package com.sl.ms.trade.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sl.ms.trade.constant.Constants;
@@ -39,9 +37,18 @@ public class PayChannelServiceImpl extends ServiceImpl<PayChannelMapper, PayChan
     }
 
     @Override
+    public PayChannelEntity findByEnterpriseId(Long enterpriseId, String channelLabel) {
+        LambdaQueryWrapper<PayChannelEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PayChannelEntity::getEnterpriseId, enterpriseId)
+                .eq(PayChannelEntity::getChannelLabel, channelLabel)
+                .eq(PayChannelEntity::getEnableFlag, Constants.YES);
+        //TODO 缓存
+        return super.getOne(queryWrapper);
+    }
+
+    @Override
     public PayChannelEntity createPayChannel(PayChannelDTO payChannelDTO) {
         PayChannelEntity payChannel = BeanUtil.toBean(payChannelDTO, PayChannelEntity.class);
-        payChannel.setOtherConfig(JSONUtil.toJsonStr(payChannelDTO.getOtherConfigs()));
         boolean flag = super.save(payChannel);
         if (flag) {
             return payChannel;
@@ -52,7 +59,6 @@ public class PayChannelServiceImpl extends ServiceImpl<PayChannelMapper, PayChan
     @Override
     public Boolean updatePayChannel(PayChannelDTO payChannelDTO) {
         PayChannelEntity payChannel = BeanUtil.toBean(payChannelDTO, PayChannelEntity.class);
-        payChannel.setOtherConfig(JSONUtil.toJsonStr(payChannelDTO.getOtherConfigs()));
         return super.updateById(payChannel);
     }
 
