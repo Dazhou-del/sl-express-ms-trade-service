@@ -1,9 +1,11 @@
 package com.sl.ms.trade.service.impl;
 
+import cn.hutool.core.util.NumberUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.entity.TradingEntity;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.mapper.TradingMapper;
 import com.sl.ms.trade.service.TradingService;
 import org.springframework.stereotype.Service;
@@ -31,10 +33,13 @@ public class TradingServiceImpl extends ServiceImpl<TradingMapper, TradingEntity
     }
 
     @Override
-    public List<TradingEntity> findTradingByTradingState(String tradingState) {
+    public List<TradingEntity> findListByTradingState(TradingStateEnum tradingState, Integer count) {
+        count = NumberUtil.max(count, 10);
         LambdaQueryWrapper<TradingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TradingEntity::getTradingState, tradingState)
-                .eq(TradingEntity::getEnableFlag, Constants.YES);
+                .eq(TradingEntity::getEnableFlag, Constants.YES)
+                .orderByAsc(TradingEntity::getCreated)
+                .last("LIMIT " + count);
         return list(queryWrapper);
     }
 }

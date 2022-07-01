@@ -9,6 +9,7 @@ import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.NativePayHandler;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
 import com.sl.ms.trade.service.PayChannelService;
@@ -63,7 +64,7 @@ public class WechatNativePayHandler implements NativePayHandler {
             //指定统一下单json字符串
             tradingEntity.setPlaceOrderJson(JSONUtil.toJsonStr(response));
             //指定交易状态
-            tradingEntity.setTradingState(TradingConstant.FKZ);
+            tradingEntity.setTradingState(TradingStateEnum.FKZ);
         } catch (Exception e) {
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         }

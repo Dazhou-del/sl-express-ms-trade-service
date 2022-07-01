@@ -3,17 +3,19 @@ package com.sl.ms.trade.handler.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
+import com.sl.ms.trade.enums.RefundStatusEnum;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BeforePayHandler;
 import com.sl.ms.trade.service.RefundRecordService;
 import com.sl.ms.trade.service.TradingService;
 import com.sl.transport.common.exception.SLException;
+import com.sl.transport.common.util.ObjectUtil;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -45,11 +47,11 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
             return;
         }
 
-        String tradingState = trading.getTradingState();
-        if (StrUtil.equalsAny(tradingState, TradingConstant.YJS, TradingConstant.MD)) {
+        TradingStateEnum tradingState = trading.getTradingState();
+        if (ObjectUtil.equalsAny(tradingState, TradingStateEnum.YJS, TradingStateEnum.MD)) {
             //已结算、免单：直接抛出重复支付异常
             throw new SLException(TradingEnum.TRADING_STATE_SUCCEED);
-        } else if (StrUtil.equals(TradingConstant.FKZ, tradingState)) {
+        } else if (ObjectUtil.equals(TradingStateEnum.FKZ, tradingState)) {
             //付款中，如果支付渠道一致，说明是重复，抛出支付中异常，否则需要更换支付渠道
             //举例：第一次通过支付宝付款，付款中用户取消，改换了微信支付
             if (StrUtil.equals(trading.getTradingChannel(), tradingEntity.getTradingChannel())) {
@@ -59,7 +61,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
                 //重新生成交易号，在这里就会出现id 与 TradingOrderNo 数据不同的情况，其他情况下是一样的
                 tradingEntity.setTradingOrderNo(Convert.toLong(identifierGenerator.nextId(tradingEntity)));
             }
-        } else if (StrUtil.equalsAny(tradingState, TradingConstant.QXDD, TradingConstant.GZ)) {
+        } else if (ObjectUtil.equalsAny(tradingState, TradingStateEnum.QXDD, TradingStateEnum.GZ)) {
             //取消订单,挂账：创建交易号，对原交易单发起支付
             tradingEntity.setId(trading.getId()); // id设置为原订单的id
             //重新生成交易号，在这里就会出现id 与 TradingOrderNo 数据不同的情况，其他情况下是一样的
@@ -98,8 +100,8 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
         }
 
         //校验交易单是否已经完成或已取消
-        String tradingState = trading.getTradingState();
-        if (StrUtil.equalsAny(tradingState, TradingConstant.YJS, TradingConstant.QXDD)) {
+        TradingStateEnum tradingState = trading.getTradingState();
+        if (ObjectUtil.equalsAny(tradingState, TradingStateEnum.YJS, TradingStateEnum.QXDD)) {
             throw new SLException(TradingEnum.TRADING_STATE_SUCCEED);
         }
     }
@@ -121,7 +123,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
         refundRecord.setRefundAmount(refundAmount);
         refundRecord.setEnterpriseId(trading.getEnterpriseId());
         refundRecord.setTradingChannel(trading.getTradingChannel());
-        refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SENDING);
+        refundRecord.setRefundStatus(RefundStatusEnum.SENDING);
         refundRecord.setTotal(trading.getTradingAmount());
         String memo = StrUtil.format("退款（{}）", size + 1);
         refundRecord.setMemo(memo);
@@ -135,7 +137,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
             throw new SLException(TradingEnum.NOT_FOUND);
         }
 
-        if (!StrUtil.equals(trading.getTradingState(), TradingConstant.YJS)) {
+        if (trading.getTradingState() == TradingStateEnum.YJS) {
             throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
         }
 
@@ -151,7 +153,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
             throw new SLException(TradingEnum.REFUND_NOT_FOUND);
         }
 
-        if (StrUtil.equals(refundRecord.getRefundStatus(), TradingConstant.REFUND_STATUS_SUCCESS)) {
+        if (ObjectUtil.equals(refundRecord.getRefundStatus(), RefundStatusEnum.SUCCESS)) {
             throw new SLException(TradingEnum.REFUND_ALREADY_COMPLETED);
         }
     }

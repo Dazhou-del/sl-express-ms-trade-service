@@ -17,7 +17,4 @@ public interface Constants {
      */
     String NO = "NO";
 
-    int ERROR = 500;
-
-    int OK = 200;
 }

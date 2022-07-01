@@ -2,6 +2,9 @@ package com.sl.ms.trade.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.sl.ms.trade.entity.RefundRecordEntity;
+import com.sl.ms.trade.entity.TradingEntity;
+import com.sl.ms.trade.enums.RefundStatusEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 
 import java.util.List;
 
@@ -33,4 +36,13 @@ public interface RefundRecordService extends IService<RefundRecordEntity> {
      * @return 退款列表
      */
     List<RefundRecordEntity> findListByProductOrderNo(Long productOrderNo);
+
+    /***
+     * 按状态查询退款单，按照时间正序排序
+     *
+     * @param refundStatus 状态
+     * @param count 查询数量，默认查询10条
+     * @return 退款单数据列表
+     */
+    List<RefundRecordEntity> findListByRefundStatus(RefundStatusEnum refundStatus, Integer count);
 }

@@ -1,6 +1,7 @@
 package com.sl.ms.trade.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.transport.common.entity.BaseEntity;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -39,7 +40,7 @@ public class TradingEntity extends BaseEntity {
     private String tradingType;
 
     @ApiModelProperty(value = "交易单状态【DFK待付款,FKZ付款中,QXDD取消订单,YJS已结算,MD免单,GZ挂账】")
-    private String tradingState;
+    private TradingStateEnum tradingState;
 
     @ApiModelProperty(value = "收款人姓名")
     private String payeeName;

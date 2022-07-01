@@ -1,6 +1,5 @@
 package com.sl;
 
-import com.sl.transport.common.config.FeignErrorDecoder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

@@ -1,9 +1,10 @@
 package com.sl.ms.trade.service.impl;
 
+import cn.hutool.core.util.NumberUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
+import com.sl.ms.trade.enums.RefundStatusEnum;
 import com.sl.ms.trade.mapper.RefundRecordMapper;
 import com.sl.ms.trade.service.RefundRecordService;
 import org.springframework.stereotype.Service;
@@ -37,5 +38,15 @@ public class RefundRecordServiceImpl extends ServiceImpl<RefundRecordMapper, Ref
         queryWrapper.eq(RefundRecordEntity::getProductOrderNo, productOrderNo);
         queryWrapper.orderByDesc(RefundRecordEntity::getCreated);
         return super.list(queryWrapper);
+    }
+
+    @Override
+    public List<RefundRecordEntity> findListByRefundStatus(RefundStatusEnum refundStatus, Integer count) {
+        count = NumberUtil.max(count, 10);
+        LambdaQueryWrapper<RefundRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RefundRecordEntity::getRefundStatus, refundStatus)
+                .orderByAsc(RefundRecordEntity::getCreated)
+                .last("LIMIT " + count);
+        return list(queryWrapper);
     }
 }

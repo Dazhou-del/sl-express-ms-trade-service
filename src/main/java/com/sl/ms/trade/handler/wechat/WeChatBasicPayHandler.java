@@ -7,12 +7,12 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
-import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.RefundStatusEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BasicPayHandler;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
 import com.sl.transport.common.exception.SLException;
@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+
+import static com.sl.ms.trade.enums.TradingEnum.*;
 
 /**
  * 微信基础支付功能的实现
@@ -50,7 +52,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doGet(apiPath, params);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}, params = {}", apiPath, JSONUtil.toJsonStr(params), e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL, e);
+            throw new SLException(NATIVE_REFUND_FAIL, e);
         }
         if (response.isOk()) {
             JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
@@ -64,9 +66,9 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             // PAYERROR：支付失败（仅付款码支付会返回）
             String tradeStatus = jsonObject.getStr("trade_state");
             if (StrUtil.equalsAny(tradeStatus, TradingConstant.WECHAT_TRADE_CLOSED, TradingConstant.WECHAT_TRADE_REVOKED)) {
-                trading.setTradingState(TradingConstant.QXDD);
+                trading.setTradingState(TradingStateEnum.QXDD);
             } else if (StrUtil.equalsAny(tradeStatus, TradingConstant.WECHAT_REFUND_SUCCESS, TradingConstant.WECHAT_TRADE_REFUND)) {
-                trading.setTradingState(TradingConstant.YJS);
+                trading.setTradingState(TradingStateEnum.YJS);
             } else if (StrUtil.equalsAny(tradeStatus, TradingConstant.WECHAT_TRADE_NOTPAY)) {
                 //如果是未支付，需要判断下时间，超过2小时未知的订单需要关闭订单以及设置状态为QXDD
                 long between = LocalDateTimeUtil.between(trading.getCreated(), LocalDateTimeUtil.now(), ChronoUnit.HOURS);
@@ -83,7 +85,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             trading.setResultJson(response.getBody());
             return true;
         }
-        throw new SLException(response.getBody(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getCode());
+        throw new SLException(response.getBody(), NATIVE_REFUND_FAIL.getCode(), NATIVE_REFUND_FAIL.getCode());
     }
 
     @Override
@@ -99,12 +101,12 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
         try {
             WeChatResponse response = client.doPost(apiPath, params);
             if (response.getStatus() == 204) {
-                trading.setTradingState(TradingConstant.QXDD);
+                trading.setTradingState(TradingStateEnum.QXDD);
                 return true;
             }
             return false;
         } catch (Exception e) {
-            throw new SLException(TradingEnum.CLOSE_FAIL, e);
+            throw new SLException(CLOSE_FAIL, e);
         }
     }
 
@@ -129,7 +131,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doPost(apiPath, params);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}, params = {}", apiPath, JSONUtil.toJsonStr(params), e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL, e);
+            throw new SLException(NATIVE_REFUND_FAIL, e);
         }
         refundRecord.setRefundCode(Convert.toStr(response.getStatus()));
         refundRecord.setRefundMsg(response.getBody());
@@ -141,15 +143,15 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             // ABNORMAL：退款异常
             String status = jsonObject.getStr("status");
             if (StrUtil.equals(status, TradingConstant.WECHAT_REFUND_PROCESSING)) {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SENDING);
+                refundRecord.setRefundStatus(RefundStatusEnum.SENDING);
             } else if (StrUtil.equals(status, TradingConstant.WECHAT_REFUND_SUCCESS)) {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
+                refundRecord.setRefundStatus(RefundStatusEnum.SUCCESS);
             } else {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_FAIL);
+                refundRecord.setRefundStatus(RefundStatusEnum.FAIL);
             }
             return true;
         }
-        throw new SLException(response.getBody(), Constants.ERROR);
+        throw new SLException(refundRecord.getRefundMsg(), NATIVE_REFUND_FAIL.getCode(), NATIVE_REFUND_FAIL.getStatus());
     }
 
     @Override
@@ -165,7 +167,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doGet(apiPath);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}", apiPath, e);
-            throw new SLException(TradingEnum.NATIVE_QUERY_REFUND_FAIL, e);
+            throw new SLException(NATIVE_QUERY_REFUND_FAIL, e);
         }
 
         refundRecord.setRefundCode(Convert.toStr(response.getStatus()));
@@ -178,15 +180,15 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             // ABNORMAL：退款异常
             String status = jsonObject.getStr("status");
             if (StrUtil.equals(status, TradingConstant.WECHAT_REFUND_PROCESSING)) {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SENDING);
+                refundRecord.setRefundStatus(RefundStatusEnum.SENDING);
             } else if (StrUtil.equals(status, TradingConstant.WECHAT_REFUND_SUCCESS)) {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
+                refundRecord.setRefundStatus(RefundStatusEnum.SUCCESS);
             } else {
-                refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_FAIL);
+                refundRecord.setRefundStatus(RefundStatusEnum.FAIL);
             }
             return true;
         }
-        throw new SLException(response.getBody(), TradingEnum.NATIVE_QUERY_REFUND_FAIL.getCode(), TradingEnum.NATIVE_QUERY_REFUND_FAIL.getStatus());
+        throw new SLException(response.getBody(), NATIVE_QUERY_REFUND_FAIL.getCode(), NATIVE_QUERY_REFUND_FAIL.getStatus());
     }
 
     @Override

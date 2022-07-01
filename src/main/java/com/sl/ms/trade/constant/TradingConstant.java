@@ -67,26 +67,5 @@ public class TradingConstant {
     //挂账
     public static final String TRADING_TYPE_GZ = "GZ";
 
-    //【平台:交易单、订单状态】
-    //待付款
-    public static final String DFK = "DFK";
-    //付款中
-    public static final String FKZ = "FKZ";
-    //已结算，已付款
-    public static final String YJS = "YJS";
-    //取消订单
-    public static final String QXDD = "QXDD";
-    //免单
-    public static final String MD = "MD";
-    //挂账
-    public static final String GZ = "GZ";
-
-    //【平台：退款状态】
-    //失败
-    public static final String REFUND_STATUS_FAIL = "FAIL";
-    //成功
-    public static final String REFUND_STATUS_SUCCESS = "SUCCESS";
-    //请求中
-    public static final String REFUND_STATUS_SENDING = "SENDING";
 
 }

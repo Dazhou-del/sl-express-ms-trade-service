@@ -8,18 +8,14 @@ import com.alipay.easysdk.kernel.Config;
 import com.alipay.easysdk.kernel.util.ResponseChecker;
 import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
 import com.sl.ms.trade.constant.Constants;
-import com.sl.ms.trade.constant.TradingConstant;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.NativePayHandler;
-import com.sl.ms.trade.service.PayChannelService;
 import com.sl.transport.common.exception.SLException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * @author zzj
@@ -28,9 +24,6 @@ import javax.annotation.Resource;
 @Slf4j
 @Component("aliNativePayHandler")
 public class AliNativePayHandler implements NativePayHandler {
-
-    @Resource
-    private PayChannelService payChannelService;
 
     @Override
     public void createDownLineTrading(TradingEntity tradingEntity) throws SLException {
@@ -48,8 +41,8 @@ public class AliNativePayHandler implements NativePayHandler {
                             Convert.toStr(tradingEntity.getTradingOrderNo()), //业务订单号
                             Convert.toStr(tradingEntity.getTradingAmount())); //金额
         } catch (Exception e) {
-            log.error("支付宝统一下单创建失败：{}", ExceptionUtil.stacktraceToString(e));
-            throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
+            log.error("支付宝统一下单创建失败：tradingEntity = {}", tradingEntity, e);
+            throw new SLException(TradingEnum.NATIVE_PAY_FAIL, e);
         }
 
         //受理结果【只表示请求是否成功，而不是支付是否成功】
@@ -61,10 +54,10 @@ public class AliNativePayHandler implements NativePayHandler {
             tradingEntity.setPlaceOrderCode(subCode); //返回的编码
             tradingEntity.setPlaceOrderMsg(subMsg); //二维码需要展现的信息
             tradingEntity.setPlaceOrderJson(JSONUtil.toJsonStr(response));
-            tradingEntity.setTradingState(TradingConstant.FKZ);
+            tradingEntity.setTradingState(TradingStateEnum.FKZ);
             return;
         }
-        throw new SLException(JSONUtil.toJsonStr(response), Constants.ERROR);
+        throw new SLException(JSONUtil.toJsonStr(response), TradingEnum.NATIVE_PAY_FAIL.getCode(), TradingEnum.NATIVE_PAY_FAIL.getStatus());
     }
 
 

@@ -4,11 +4,10 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.json.JSONUtil;
-import com.sl.ms.trade.constant.TradingConstant;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.JsapiPayHandler;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
 import com.sl.transport.common.exception.SLException;
@@ -59,7 +58,7 @@ public class WechatJsapiPayHandler implements JsapiPayHandler {
             //设置jsapi调起支付的参数
             tradingEntity.setPlaceOrderJson(JSONUtil.toJsonStr(response));
             //指定交易状态
-            tradingEntity.setTradingState(TradingConstant.FKZ);
+            tradingEntity.setTradingState(TradingStateEnum.FKZ);
         } catch (Exception e) {
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         }

@@ -10,11 +10,14 @@ import com.alipay.easysdk.payment.common.models.AlipayTradeCloseResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeFastpayRefundQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
+import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
+import com.sl.ms.trade.enums.RefundStatusEnum;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BasicPayHandler;
 import com.sl.transport.common.exception.SLException;
 import lombok.extern.slf4j.Slf4j;
@@ -60,11 +63,11 @@ public class AliBasicPayHandler implements BasicPayHandler {
             String tradeStatus = queryResponse.getTradeStatus();
             if (StrUtil.equals(TradingConstant.ALI_TRADE_CLOSED, tradeStatus)) {
                 //支付取消：TRADE_CLOSED（未付款交易超时关闭，或支付完成后全额退款）
-                trading.setTradingState(TradingConstant.QXDD);
+                trading.setTradingState(TradingStateEnum.QXDD);
             } else if (StrUtil.equalsAny(tradeStatus, TradingConstant.ALI_TRADE_SUCCESS, TradingConstant.ALI_TRADE_FINISHED)) {
                 // TRADE_SUCCESS（交易支付成功）
                 // TRADE_FINISHED（交易结束，不可退款）
-                trading.setTradingState(TradingConstant.YJS);
+                trading.setTradingState(TradingStateEnum.YJS);
             } else {
                 //非最终状态不处理，当前交易状态：WAIT_BUYER_PAY（交易创建，等待买家付款）不处理
                 return false;
@@ -88,7 +91,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
                     .close(String.valueOf(trading.getTradingOrderNo()));
             boolean success = ResponseChecker.success(closeResponse);
             if (success) {
-                trading.setTradingState(TradingConstant.QXDD);
+                trading.setTradingState(TradingStateEnum.QXDD);
                 return true;
             }
             return false;
@@ -123,7 +126,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
         refundRecord.setRefundMsg(JSONUtil.toJsonStr(refundResponse));
         boolean success = ResponseChecker.success(refundResponse);
         if (success) {
-            refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
+            refundRecord.setRefundStatus(RefundStatusEnum.SUCCESS);
             return true;
         }
         throw new SLException(refundRecord.getRefundMsg(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());
@@ -149,7 +152,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
         refundRecord.setRefundMsg(JSONUtil.toJsonStr(response));
         boolean success = ResponseChecker.success(response);
         if (success) {
-            refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
+            refundRecord.setRefundStatus(RefundStatusEnum.SUCCESS);
             return true;
         }
         throw new SLException(refundRecord.getRefundMsg(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());

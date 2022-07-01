@@ -7,6 +7,7 @@ import com.sl.ms.trade.constant.TradingCacheConstant;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BeforePayHandler;
 import com.sl.ms.trade.handler.HandlerFactory;
 import com.sl.ms.trade.handler.NativePayHandler;
@@ -14,6 +15,7 @@ import com.sl.ms.trade.service.NativePayService;
 import com.sl.ms.trade.service.QRCodeService;
 import com.sl.ms.trade.service.TradingService;
 import com.sl.transport.common.exception.SLException;
+import com.sl.transport.common.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -43,7 +45,7 @@ public class NativePayServiceImpl implements NativePayService {
     @Override
     public String queryQrCodeUrl(Long tradingOrderNo) {
         TradingEntity trading = this.tradingService.findTradByTradingOrderNo(tradingOrderNo);
-        if (StrUtil.equals(trading.getTradingState(), TradingConstant.YJS)) {
+        if (ObjectUtil.equals(trading.getTradingState(), TradingStateEnum.YJS)) {
             //订单已完成，不返回二维码
             throw new SLException(TradingEnum.TRADING_STATE_SUCCEED);
         }

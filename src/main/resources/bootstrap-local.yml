@@ -31,7 +31,20 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: ASSIGN_ID
+xxl:
+  job:
+    admin:
+      addresses: ${xxl.job.admin.addresses}
+    executor:
+      appname: ${xxl.job.executor.appname}
+      #执行器日志文件保存天数
+      logretentiondays: ${xxl.job.executor.logretentiondays}
 sl:
+  job:
+    trading:
+      count: ${job.trading.count} #每次查询交易单的数量
+    refund:
+      count: ${job.refund.count} #每次查询退款单的数量
   swagger:
     package-path: com.sl.ms.trade.controller
     title: 神领物流 - 交易（支付）微服务接口文档

@@ -1,6 +1,7 @@
 package com.sl.ms.trade.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.sl.ms.trade.enums.RefundStatusEnum;
 import com.sl.transport.common.entity.BaseEntity;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -38,8 +39,8 @@ public class RefundRecordEntity extends BaseEntity {
     @ApiModelProperty(value = "退款渠道【支付宝、微信、现金】")
     private String tradingChannel;
 
-    @ApiModelProperty(value = "退款状态【成功：SUCCESS,进行中：SENDING】")
-    private String refundStatus;
+    @ApiModelProperty(value = "退款状态")
+    private RefundStatusEnum refundStatus;
 
     @ApiModelProperty(value = "返回编码")
     private String refundCode;

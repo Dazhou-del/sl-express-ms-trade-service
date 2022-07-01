@@ -12,6 +12,7 @@ import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.TradingEnum;
+import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BasicPayHandler;
 import com.sl.ms.trade.handler.BeforePayHandler;
 import com.sl.ms.trade.handler.HandlerFactory;
@@ -19,6 +20,7 @@ import com.sl.ms.trade.service.BasicPayService;
 import com.sl.ms.trade.service.RefundRecordService;
 import com.sl.ms.trade.service.TradingService;
 import com.sl.transport.common.exception.SLException;
+import com.sl.transport.common.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -65,7 +67,7 @@ public class BasicPayServiceImpl implements BasicPayService {
             Boolean result = handler.queryTrading(trading);
             if (result) {
                 //如果交易单已经完成，需要将二维码数据删除，节省数据库空间，如果有需要可以再次生成
-                if (StrUtil.equalsAny(trading.getTradingState(), TradingConstant.YJS, TradingConstant.QXDD)) {
+                if (ObjectUtil.equalsAny(trading.getTradingState(), TradingStateEnum.YJS, TradingStateEnum.QXDD)) {
                     trading.setQrCode("");
                 }
                 //更新数据
