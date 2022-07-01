@@ -1,9 +1,8 @@
 package com.sl.ms.trade.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingCacheConstant;
-import com.sl.ms.trade.domain.TradingDTO;
+import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.BeforePayHandler;
@@ -31,16 +30,17 @@ public class JsapiPayServiceImpl implements JsapiPayService {
     private BeforePayHandler beforePayHandler;
 
     @Override
-    public TradingDTO createJsapiTrading(TradingDTO tradingDTO) {
+    public TradingEntity createJsapiTrading(TradingEntity tradingEntity) {
         //交易前置处理：检测交易单参数
-        Boolean flag = beforePayHandler.checkCreateTrading(tradingDTO);
+        Boolean flag = beforePayHandler.checkCreateTrading(tradingEntity);
         if (!flag) {
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         }
-        tradingDTO.setEnableFlag(Constants.YES);
+        tradingEntity.setEnableFlag(Constants.YES);
+        tradingEntity.setTradingType(TradingConstant.TRADING_TYPE_FK);
 
         //对交易订单加锁
-        Long productOrderNo = tradingDTO.getProductOrderNo();
+        Long productOrderNo = tradingEntity.getProductOrderNo();
         String key = TradingCacheConstant.CREATE_PAY + productOrderNo;
         RLock lock = redissonClient.getLock(key);
         try {
@@ -48,24 +48,23 @@ public class JsapiPayServiceImpl implements JsapiPayService {
             lock.lock();
 
             //交易前置处理：幂等性处理
-            this.beforePayHandler.idempotentCreateTrading(tradingDTO);
+            this.beforePayHandler.idempotentCreateTrading(tradingEntity);
 
             //调用不同的支付渠道进行处理
-            JsapiPayHandler jsapiPayHandler = HandlerFactory.get(tradingDTO.getTradingChannel(), JsapiPayHandler.class);
-            jsapiPayHandler.createJsapiTrading(tradingDTO);
+            JsapiPayHandler jsapiPayHandler = HandlerFactory.get(tradingEntity.getTradingChannel(), JsapiPayHandler.class);
+            jsapiPayHandler.createJsapiTrading(tradingEntity);
 
             //新增或更新交易数据
-            TradingEntity tradingEntity = BeanUtil.toBean(tradingDTO, TradingEntity.class);
             flag = this.tradingService.saveOrUpdate(tradingEntity);
             if (!flag) {
                 throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
             }
 
-            return BeanUtil.toBean(tradingEntity, TradingDTO.class);
+            return tradingEntity;
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Jsapi预创建异常: tradingDTO = {}", tradingDTO, e);
+            log.error("Jsapi预创建异常: tradingDTO = {}", tradingEntity, e);
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         } finally {
             lock.unlock();

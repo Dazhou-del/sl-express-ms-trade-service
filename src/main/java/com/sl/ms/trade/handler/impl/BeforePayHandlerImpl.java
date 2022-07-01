@@ -7,8 +7,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.sl.ms.trade.constant.TradingConstant;
-import com.sl.ms.trade.domain.RefundRecordDTO;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.TradingEnum;
@@ -16,7 +14,6 @@ import com.sl.ms.trade.handler.BeforePayHandler;
 import com.sl.ms.trade.service.RefundRecordService;
 import com.sl.ms.trade.service.TradingService;
 import com.sl.transport.common.exception.SLException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,12 +37,12 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
     private RefundRecordService refundRecordService;
 
     @Override
-    public TradingDTO idempotentCreateTrading(TradingDTO tradingDTO) throws SLException {
-        TradingEntity trading = tradingService.findTradByProductOrderNo(tradingDTO.getProductOrderNo());
+    public void idempotentCreateTrading(TradingEntity tradingEntity) throws SLException {
+        TradingEntity trading = tradingService.findTradByProductOrderNo(tradingEntity.getProductOrderNo());
         if (ObjectUtil.isEmpty(trading)) {
             //新交易单，生成交易号
-            tradingDTO.setTradingOrderNo((Long) identifierGenerator.nextId(tradingDTO));
-            return tradingDTO;
+            tradingEntity.setTradingOrderNo((Long) identifierGenerator.nextId(tradingEntity));
+            return;
         }
 
         String tradingState = trading.getTradingState();
@@ -55,34 +52,43 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
         } else if (StrUtil.equals(TradingConstant.FKZ, tradingState)) {
             //付款中，如果支付渠道一致，说明是重复，抛出支付中异常，否则需要更换支付渠道
             //举例：第一次通过支付宝付款，付款中用户取消，改换了微信支付
-            if (StrUtil.equals(trading.getTradingChannel(), tradingDTO.getTradingChannel())) {
+            if (StrUtil.equals(trading.getTradingChannel(), tradingEntity.getTradingChannel())) {
                 throw new SLException(TradingEnum.TRADING_STATE_PAYING);
             } else {
-                tradingDTO.setId(trading.getId()); // id设置为原订单的id
+                tradingEntity.setId(trading.getId()); // id设置为原订单的id
                 //重新生成交易号，在这里就会出现id 与 TradingOrderNo 数据不同的情况，其他情况下是一样的
-                tradingDTO.setTradingOrderNo(Convert.toLong(identifierGenerator.nextId(trading)));
+                tradingEntity.setTradingOrderNo(Convert.toLong(identifierGenerator.nextId(tradingEntity)));
             }
         } else if (StrUtil.equalsAny(tradingState, TradingConstant.QXDD, TradingConstant.GZ)) {
             //取消订单,挂账：创建交易号，对原交易单发起支付
-            tradingDTO.setId(trading.getId()); // id设置为原订单的id
+            tradingEntity.setId(trading.getId()); // id设置为原订单的id
             //重新生成交易号，在这里就会出现id 与 TradingOrderNo 数据不同的情况，其他情况下是一样的
-            tradingDTO.setTradingOrderNo(Convert.toLong(identifierGenerator.nextId(trading)));
+            tradingEntity.setTradingOrderNo(Convert.toLong(identifierGenerator.nextId(tradingEntity)));
         } else {
             //其他情况：直接交易失败
             throw new SLException(TradingEnum.PAYING_TRADING_FAIL);
         }
-        return tradingDTO;
     }
 
     @Override
-    public Boolean checkCreateTrading(TradingDTO tradingDTO) {
+    public Boolean checkCreateTrading(TradingEntity tradingEntity) {
         //校验不为为空，订单备注、订单号、企业号、交易金额、支付渠道
-        return ObjectUtil.isAllNotEmpty(tradingDTO,
-                tradingDTO.getMemo(),
-                tradingDTO.getProductOrderNo(),
-                tradingDTO.getEnterpriseId(),
-                tradingDTO.getTradingAmount(),
-                tradingDTO.getTradingChannel());
+        boolean flag = ObjectUtil.isAllNotEmpty(tradingEntity,
+                tradingEntity.getMemo(),
+                tradingEntity.getProductOrderNo(),
+                tradingEntity.getEnterpriseId(),
+                tradingEntity.getTradingAmount(),
+                tradingEntity.getTradingChannel());
+
+        if (!flag) {
+            return false;
+        }
+
+        if (NumberUtil.isLessOrEqual(tradingEntity.getTradingAmount(), BigDecimal.valueOf(0))) {
+            //金额不能小于等于0
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -101,7 +107,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
     @Override
     public RefundRecordEntity idempotentRefundTrading(TradingEntity trading, BigDecimal refundAmount) {
         //查询退款次数，不能大于20次
-        List<RefundRecordEntity> recordList = this.refundRecordService.findList(trading.getTradingOrderNo());
+        List<RefundRecordEntity> recordList = this.refundRecordService.findListByTradingOrderNo(trading.getTradingOrderNo());
         int size = CollUtil.size(recordList);
         if (size >= 20) {
             return null;
@@ -114,7 +120,6 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
         refundRecord.setProductOrderNo(trading.getProductOrderNo());
         refundRecord.setRefundAmount(refundAmount);
         refundRecord.setEnterpriseId(trading.getEnterpriseId());
-        refundRecord.setStoreId(trading.getStoreId());
         refundRecord.setTradingChannel(trading.getTradingChannel());
         refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SENDING);
         refundRecord.setTotal(trading.getTradingAmount());

@@ -1,12 +1,10 @@
 package com.sl.ms.trade.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingCacheConstant;
 import com.sl.ms.trade.constant.TradingConstant;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.BeforePayHandler;
@@ -43,8 +41,8 @@ public class NativePayServiceImpl implements NativePayService {
     private QRCodeService qrCodeService;
 
     @Override
-    public String queryQrCodeUrl(Long productOrderNo) {
-        TradingEntity trading = this.tradingService.findTradByProductOrderNo(productOrderNo);
+    public String queryQrCodeUrl(Long tradingOrderNo) {
+        TradingEntity trading = this.tradingService.findTradByTradingOrderNo(tradingOrderNo);
         if (StrUtil.equals(trading.getTradingState(), TradingConstant.YJS)) {
             //订单已完成，不返回二维码
             throw new SLException(TradingEnum.TRADING_STATE_SUCCEED);
@@ -53,16 +51,18 @@ public class NativePayServiceImpl implements NativePayService {
     }
 
     @Override
-    public TradingDTO createDownLineTrading(TradingDTO tradingDTO) {
+    public TradingEntity createDownLineTrading(TradingEntity tradingEntity) {
         //交易前置处理：检测交易单参数
-        Boolean flag = beforePayHandler.checkCreateTrading(tradingDTO);
+        Boolean flag = beforePayHandler.checkCreateTrading(tradingEntity);
         if (!flag) {
-            throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
+            throw new SLException(TradingEnum.CONFIG_ERROR);
         }
-        tradingDTO.setEnableFlag(Constants.YES);
+
+        tradingEntity.setTradingType(TradingConstant.TRADING_TYPE_FK);
+        tradingEntity.setEnableFlag(Constants.YES);
 
         //对交易订单加锁
-        Long productOrderNo = tradingDTO.getProductOrderNo();
+        Long productOrderNo = tradingEntity.getProductOrderNo();
         String key = TradingCacheConstant.CREATE_PAY + productOrderNo;
         RLock lock = redissonClient.getLock(key);
         try {
@@ -70,25 +70,24 @@ public class NativePayServiceImpl implements NativePayService {
             lock.lock();
 
             //交易前置处理：幂等性处理
-            this.beforePayHandler.idempotentCreateTrading(tradingDTO);
+            this.beforePayHandler.idempotentCreateTrading(tradingEntity);
 
             //调用不同的支付渠道进行处理
-            NativePayHandler nativePayHandler = HandlerFactory.get(tradingDTO.getTradingChannel(), NativePayHandler.class);
-            nativePayHandler.createDownLineTrading(tradingDTO);
+            NativePayHandler nativePayHandler = HandlerFactory.get(tradingEntity.getTradingChannel(), NativePayHandler.class);
+            nativePayHandler.createDownLineTrading(tradingEntity);
 
             //生成统一收款二维码
-            String placeOrderMsg = tradingDTO.getPlaceOrderMsg();
+            String placeOrderMsg = tradingEntity.getPlaceOrderMsg();
             String qrCode = this.qrCodeService.generate(placeOrderMsg);
-            tradingDTO.setQrCode(qrCode);
+            tradingEntity.setQrCode(qrCode);
 
             //新增或更新交易数据
-            TradingEntity tradingEntity = BeanUtil.toBean(tradingDTO, TradingEntity.class);
             flag = this.tradingService.saveOrUpdate(tradingEntity);
             if (!flag) {
                 throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
             }
 
-            return BeanUtil.toBean(tradingEntity, TradingDTO.class);
+            return tradingEntity;
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {

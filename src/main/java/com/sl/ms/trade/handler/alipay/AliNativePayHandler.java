@@ -10,6 +10,7 @@ import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse
 import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.domain.TradingDTO;
+import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.NativePayHandler;
@@ -32,9 +33,9 @@ public class AliNativePayHandler implements NativePayHandler {
     private PayChannelService payChannelService;
 
     @Override
-    public void createDownLineTrading(TradingDTO tradingDTO) throws SLException {
+    public void createDownLineTrading(TradingEntity tradingEntity) throws SLException {
         //查询配置
-        Config config = AlipayConfig.getConfig(tradingDTO.getEnterpriseId());
+        Config config = AlipayConfig.getConfig(tradingEntity.getEnterpriseId());
         //Factory使用配置
         Factory.setOptions(config);
         AlipayTradePrecreateResponse response;
@@ -43,9 +44,9 @@ public class AliNativePayHandler implements NativePayHandler {
             response = Factory
                     .Payment
                     .FaceToFace()
-                    .preCreate(tradingDTO.getMemo(), //订单描述
-                            Convert.toStr(tradingDTO.getTradingOrderNo()), //业务订单号
-                            Convert.toStr(tradingDTO.getTradingAmount())); //金额
+                    .preCreate(tradingEntity.getMemo(), //订单描述
+                            Convert.toStr(tradingEntity.getTradingOrderNo()), //业务订单号
+                            Convert.toStr(tradingEntity.getTradingAmount())); //金额
         } catch (Exception e) {
             log.error("支付宝统一下单创建失败：{}", ExceptionUtil.stacktraceToString(e));
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
@@ -57,10 +58,10 @@ public class AliNativePayHandler implements NativePayHandler {
         if (isSuccess) {
             String subCode = response.getSubCode();
             String subMsg = response.getQrCode();
-            tradingDTO.setPlaceOrderCode(subCode); //返回的编码
-            tradingDTO.setPlaceOrderMsg(subMsg); //二维码需要展现的信息
-            tradingDTO.setPlaceOrderJson(JSONUtil.toJsonStr(response));
-            tradingDTO.setTradingState(TradingConstant.FKZ);
+            tradingEntity.setPlaceOrderCode(subCode); //返回的编码
+            tradingEntity.setPlaceOrderMsg(subMsg); //二维码需要展现的信息
+            tradingEntity.setPlaceOrderJson(JSONUtil.toJsonStr(response));
+            tradingEntity.setTradingState(TradingConstant.FKZ);
             return;
         }
         throw new SLException(JSONUtil.toJsonStr(response), Constants.ERROR);

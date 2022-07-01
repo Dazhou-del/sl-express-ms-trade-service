@@ -2,6 +2,7 @@ package com.sl.ms.trade.controller;
 
 import com.sl.ms.trade.domain.RefundRecordDTO;
 import com.sl.ms.trade.domain.TradingDTO;
+import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.service.BasicPayService;
 import com.sl.transport.common.exception.SLException;
 import io.swagger.annotations.Api;
@@ -56,7 +57,7 @@ public class BasicPayController {
                               @RequestParam("refundAmount") BigDecimal refundAmount) {
         Boolean result = this.basicPayService.refundTrading(tradingOrderNo, refundAmount);
         if (!result) {
-            throw new SLException("退款次数，不能大于20次", 500);
+            throw new SLException(TradingEnum.BASIC_REFUND_COUNT_OUT_FAIL);
         }
     }
 

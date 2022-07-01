@@ -35,9 +35,6 @@ public class RefundRecordEntity extends BaseEntity {
     @ApiModelProperty(value = "商户号")
     private Long enterpriseId;
 
-    @ApiModelProperty(value = "门店主键id")
-    private Long storeId;
-
     @ApiModelProperty(value = "退款渠道【支付宝、微信、现金】")
     private String tradingChannel;
 

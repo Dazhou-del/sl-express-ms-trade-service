@@ -83,9 +83,6 @@ public class TradingEntity extends BaseEntity {
     @ApiModelProperty(value = "商户号")
     private Long enterpriseId;
 
-    @ApiModelProperty(value = "门店主键id")
-    private Long storeId;
-
     @ApiModelProperty(value = "备注【订单门店，桌台信息】")
     private String memo;
 

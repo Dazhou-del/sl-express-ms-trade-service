@@ -15,19 +15,18 @@ public interface BeforePayHandler {
 
 
     /***
-     * CreateTrading交易幂等性
+     * 支付的交易幂等性处理，如果有问题抛出异常
      *
-     * @param tradingDTO 交易订单
-     * @return 交易单数据
+     * @param tradingEntity 交易订单
      */
-    TradingDTO idempotentCreateTrading(TradingDTO tradingDTO) throws SLException;
+    void idempotentCreateTrading(TradingEntity tradingEntity) throws SLException;
 
     /***
      * 交易单参数校验
-     * @param tradingDTO 交易订单
+     * @param tradingEntity 交易订单
      * @return 是否符合要求
      */
-    Boolean checkCreateTrading(TradingDTO tradingDTO);
+    Boolean checkCreateTrading(TradingEntity tradingEntity);
 
     /***
      * QueryTrading交易单参数校验

@@ -24,5 +24,13 @@ public interface RefundRecordService extends IService<RefundRecordEntity> {
      * @param tradingOrderNo 交易单号
      * @return 退款列表
      */
-    List<RefundRecordEntity> findList(Long tradingOrderNo);
+    List<RefundRecordEntity> findListByTradingOrderNo(Long tradingOrderNo);
+
+    /**
+     * 根据订单号查询退款列表
+     *
+     * @param productOrderNo 订单号
+     * @return 退款列表
+     */
+    List<RefundRecordEntity> findListByProductOrderNo(Long productOrderNo);
 }

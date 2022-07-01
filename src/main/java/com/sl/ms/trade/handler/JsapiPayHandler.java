@@ -1,6 +1,7 @@
 package com.sl.ms.trade.handler;
 
 import com.sl.ms.trade.domain.TradingDTO;
+import com.sl.ms.trade.entity.TradingEntity;
 
 /**
  * jsapi下单处理
@@ -13,7 +14,7 @@ public interface JsapiPayHandler extends PayChannelHandler {
     /**
      * 创建交易
      *
-     * @param tradingDTO 交易单
+     * @param tradingEntity 交易单
      */
-    void createJsapiTrading(TradingDTO tradingDTO);
+    void createJsapiTrading(TradingEntity tradingEntity);
 }

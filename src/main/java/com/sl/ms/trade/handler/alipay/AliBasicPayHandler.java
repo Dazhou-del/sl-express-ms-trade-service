@@ -10,19 +10,15 @@ import com.alipay.easysdk.payment.common.models.AlipayTradeCloseResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeFastpayRefundQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
-import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.BasicPayHandler;
-import com.sl.ms.trade.service.PayChannelService;
 import com.sl.transport.common.exception.SLException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 支付宝基础支付功能的实现
@@ -33,9 +29,6 @@ import javax.annotation.Resource;
 @Slf4j
 @Component("aliBasicPayHandler")
 public class AliBasicPayHandler implements BasicPayHandler {
-
-    @Resource
-    private PayChannelService payChannelService;
 
     @Override
     public Boolean queryTrading(TradingEntity trading) throws SLException {
@@ -51,8 +44,9 @@ public class AliBasicPayHandler implements BasicPayHandler {
                     .Common()
                     .query(String.valueOf(trading.getTradingOrderNo()));
         } catch (Exception e) {
-            log.error("查询支付宝统一下单失败：trading = {}", trading, e);
-            throw new SLException(TradingEnum.NATIVE_QUERY_FAIL);
+            String msg = StrUtil.format("查询支付宝统一下单失败：trading = {}", trading);
+            log.error(msg, e);
+            throw new SLException(msg, TradingEnum.NATIVE_QUERY_FAIL.getCode(), TradingEnum.NATIVE_QUERY_FAIL.getStatus());
         }
 
         //修改交易单状态
@@ -64,7 +58,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
         //响应成功，分析交易状态
         if (success) {
             String tradeStatus = queryResponse.getTradeStatus();
-            if (TradingConstant.ALI_TRADE_CLOSED.equals(tradeStatus)) {
+            if (StrUtil.equals(TradingConstant.ALI_TRADE_CLOSED, tradeStatus)) {
                 //支付取消：TRADE_CLOSED（未付款交易超时关闭，或支付完成后全额退款）
                 trading.setTradingState(TradingConstant.QXDD);
             } else if (StrUtil.equalsAny(tradeStatus, TradingConstant.ALI_TRADE_SUCCESS, TradingConstant.ALI_TRADE_FINISHED)) {
@@ -77,7 +71,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
             }
             return true;
         }
-        throw new SLException(trading.getResultJson(), Constants.ERROR);
+        throw new SLException(trading.getResultJson(), TradingEnum.NATIVE_QUERY_FAIL.getCode(), TradingEnum.NATIVE_QUERY_FAIL.getStatus());
     }
 
     @Override
@@ -99,7 +93,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
             }
             return false;
         } catch (Exception e) {
-            throw new SLException(TradingEnum.CLOSE_FAIL);
+            throw new SLException(TradingEnum.CLOSE_FAIL, e);
         }
     }
 
@@ -121,8 +115,9 @@ public class AliBasicPayHandler implements BasicPayHandler {
                     .refund(Convert.toStr(refundRecord.getTradingOrderNo()),
                             Convert.toStr(refundRecord.getRefundAmount()));
         } catch (Exception e) {
-            log.error("调用支付宝退款接口出错！refundRecord = {}", refundRecord, e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
+            String msg = StrUtil.format("调用支付宝退款接口出错！refundRecord = {}", refundRecord);
+            log.error(msg, e);
+            throw new SLException(msg, TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());
         }
         refundRecord.setRefundCode(refundResponse.getSubCode());
         refundRecord.setRefundMsg(JSONUtil.toJsonStr(refundResponse));
@@ -131,7 +126,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
             refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
             return true;
         }
-        throw new SLException(refundRecord.getRefundMsg(), Constants.ERROR);
+        throw new SLException(refundRecord.getRefundMsg(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());
     }
 
     @Override
@@ -147,7 +142,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
                     Convert.toStr(refundRecord.getRefundNo()));
         } catch (Exception e) {
             log.error("调用支付宝查询退款接口出错！refundRecord = {}", refundRecord, e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
+            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL, e);
         }
 
         refundRecord.setRefundCode(response.getSubCode());
@@ -157,7 +152,7 @@ public class AliBasicPayHandler implements BasicPayHandler {
             refundRecord.setRefundStatus(TradingConstant.REFUND_STATUS_SUCCESS);
             return true;
         }
-        throw new SLException(refundRecord.getRefundMsg(), Constants.ERROR);
+        throw new SLException(refundRecord.getRefundMsg(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());
     }
 
     @Override

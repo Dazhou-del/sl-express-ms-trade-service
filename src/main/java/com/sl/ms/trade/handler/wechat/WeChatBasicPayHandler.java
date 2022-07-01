@@ -15,12 +15,10 @@ import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.BasicPayHandler;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
-import com.sl.ms.trade.service.PayChannelService;
 import com.sl.transport.common.exception.SLException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
@@ -33,9 +31,6 @@ import java.util.Map;
 @Slf4j
 @Component("weChatBasicPayHandler")
 public class WeChatBasicPayHandler implements BasicPayHandler {
-
-    @Resource
-    private PayChannelService payChannelService;
 
     @Override
     public Boolean queryTrading(TradingEntity trading) throws SLException {
@@ -55,7 +50,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doGet(apiPath, params);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}, params = {}", apiPath, JSONUtil.toJsonStr(params), e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
+            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL, e);
         }
         if (response.isOk()) {
             JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
@@ -88,7 +83,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             trading.setResultJson(response.getBody());
             return true;
         }
-        throw new SLException(response.getBody(), Constants.ERROR);
+        throw new SLException(response.getBody(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getCode());
     }
 
     @Override
@@ -109,7 +104,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             }
             return false;
         } catch (Exception e) {
-            throw new SLException(TradingEnum.CLOSE_FAIL);
+            throw new SLException(TradingEnum.CLOSE_FAIL, e);
         }
     }
 
@@ -134,7 +129,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doPost(apiPath, params);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}, params = {}", apiPath, JSONUtil.toJsonStr(params), e);
-            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
+            throw new SLException(TradingEnum.NATIVE_REFUND_FAIL, e);
         }
         refundRecord.setRefundCode(Convert.toStr(response.getStatus()));
         refundRecord.setRefundMsg(response.getBody());
@@ -170,7 +165,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             response = client.doGet(apiPath);
         } catch (Exception e) {
             log.error("调用微信接口出错！apiPath = {}", apiPath, e);
-            throw new SLException(TradingEnum.REFUND_FAIL);
+            throw new SLException(TradingEnum.NATIVE_QUERY_REFUND_FAIL, e);
         }
 
         refundRecord.setRefundCode(Convert.toStr(response.getStatus()));
@@ -191,7 +186,7 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             }
             return true;
         }
-        throw new SLException(response.getBody(), Constants.ERROR);
+        throw new SLException(response.getBody(), TradingEnum.NATIVE_QUERY_REFUND_FAIL.getCode(), TradingEnum.NATIVE_QUERY_REFUND_FAIL.getStatus());
     }
 
     @Override

@@ -24,9 +24,18 @@ public class RefundRecordServiceImpl extends ServiceImpl<RefundRecordMapper, Ref
     }
 
     @Override
-    public List<RefundRecordEntity> findList(Long tradingOrderNo) {
+    public List<RefundRecordEntity> findListByTradingOrderNo(Long tradingOrderNo) {
         LambdaQueryWrapper<RefundRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(RefundRecordEntity::getTradingOrderNo, tradingOrderNo);
+        queryWrapper.orderByDesc(RefundRecordEntity::getCreated);
+        return super.list(queryWrapper);
+    }
+
+    @Override
+    public List<RefundRecordEntity> findListByProductOrderNo(Long productOrderNo) {
+        LambdaQueryWrapper<RefundRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RefundRecordEntity::getProductOrderNo, productOrderNo);
+        queryWrapper.orderByDesc(RefundRecordEntity::getCreated);
         return super.list(queryWrapper);
     }
 }
