@@ -39,6 +39,10 @@ public class TradeJob {
     @Resource
     private BasicPayService basicPayService;
 
+    public TradeJob(){
+        System.out.println("ok");
+    }
+
     /**
      * 分片广播方式查询支付状态
      * 逻辑：每次最多查询{tradingCount}个未完成的交易单，交易单id与shardTotal取模，值等于shardIndex进行处理
@@ -77,7 +81,7 @@ public class TradeJob {
         int shardIndex = NumberUtil.max(XxlJobHelper.getShardIndex(), 0);
         int shardTotal = NumberUtil.max(XxlJobHelper.getShardTotal(), 1);
 
-        List<RefundRecordEntity> list = this.refundRecordService.findListByRefundStatus(RefundStatusEnum.SENDING, tradingCount);
+        List<RefundRecordEntity> list = this.refundRecordService.findListByRefundStatus(RefundStatusEnum.SENDING, refundCount);
         if (CollUtil.isEmpty(list)) {
             XxlJobHelper.log("查询到退款单列表为空！shardIndex = {}, shardTotal = {}", shardIndex, shardTotal);
             return;
