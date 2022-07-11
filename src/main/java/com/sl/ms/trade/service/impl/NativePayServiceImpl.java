@@ -6,6 +6,7 @@ import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingCacheConstant;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.TradingEntity;
+import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.BeforePayHandler;
@@ -75,12 +76,13 @@ public class NativePayServiceImpl implements NativePayService {
             this.beforePayHandler.idempotentCreateTrading(tradingEntity);
 
             //调用不同的支付渠道进行处理
-            NativePayHandler nativePayHandler = HandlerFactory.get(tradingEntity.getTradingChannel(), NativePayHandler.class);
+            PayChannelEnum payChannel = PayChannelEnum.valueOf(tradingEntity.getTradingChannel());
+            NativePayHandler nativePayHandler = HandlerFactory.get(payChannel, NativePayHandler.class);
             nativePayHandler.createDownLineTrading(tradingEntity);
 
             //生成统一收款二维码
             String placeOrderMsg = tradingEntity.getPlaceOrderMsg();
-            String qrCode = this.qrCodeService.generate(placeOrderMsg);
+            String qrCode = this.qrCodeService.generate(placeOrderMsg, payChannel);
             tradingEntity.setQrCode(qrCode);
 
             //新增或更新交易数据

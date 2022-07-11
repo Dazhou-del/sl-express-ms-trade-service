@@ -17,14 +17,18 @@ public class HandlerFactory {
 
     }
 
-    public static <T> T get(String payChannel, Class<T> handler) {
+    public static <T> T get(PayChannelEnum payChannel, Class<T> handler) {
         Map<String, T> beans = SpringUtil.getBeansOfType(handler);
         for (Map.Entry<String, T> entry : beans.entrySet()) {
             Object obj = ReflectUtil.invoke(entry.getValue(), "payChannel");
-            if (ObjectUtil.equal(PayChannelEnum.valueOf(payChannel), obj)) {
+            if (ObjectUtil.equal(payChannel, obj)) {
                 return (T) entry.getValue();
             }
         }
         return null;
+    }
+
+    public static <T> T get(String payChannel, Class<T> handler) {
+        return get(PayChannelEnum.valueOf(payChannel), handler);
     }
 }

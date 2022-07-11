@@ -1,8 +1,13 @@
 package com.sl.ms.trade.config;
 
+import cn.hutool.core.img.ImgUtil;
+import cn.hutool.core.io.resource.ResourceUtil;
+import com.sl.ms.trade.enums.PayChannelEnum;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import java.awt.*;
 
 /**
  * 二维码生成参数配置
@@ -14,6 +19,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "sl.qrcode")
 public class QRCodeConfig {
+
+    private static Image WECHAT_LOGO;
+    private static Image ALIPAY_LOGO;
+
+    static {
+        WECHAT_LOGO = ImgUtil.read(ResourceUtil.getResource("logos/wechat.png"));
+        ALIPAY_LOGO = ImgUtil.read(ResourceUtil.getResource("logos/alipay.png"));
+    }
 
     //边距，二维码和背景之间的边距
     private Integer margin = 2;
@@ -28,4 +41,18 @@ public class QRCodeConfig {
     private Integer width = 300;
     //高
     private Integer height = 300;
+
+    public Image getLogo(PayChannelEnum payChannelEnum) {
+        switch (payChannelEnum) {
+            case ALI_PAY: {
+                return ALIPAY_LOGO;
+            }
+            case WECHAT_PAY: {
+                return WECHAT_LOGO;
+            }
+            default: {
+                return null;
+            }
+        }
+    }
 }
