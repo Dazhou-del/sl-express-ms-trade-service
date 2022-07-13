@@ -39,10 +39,6 @@ public class TradeJob {
     @Resource
     private BasicPayService basicPayService;
 
-    public TradeJob(){
-        System.out.println("ok");
-    }
-
     /**
      * 分片广播方式查询支付状态
      * 逻辑：每次最多查询{tradingCount}个未完成的交易单，交易单id与shardTotal取模，值等于shardIndex进行处理
