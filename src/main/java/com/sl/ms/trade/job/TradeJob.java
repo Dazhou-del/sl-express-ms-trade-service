@@ -2,6 +2,10 @@ package com.sl.ms.trade.job;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.json.JSONUtil;
+import com.sl.ms.base.api.common.MQFeign;
+import com.sl.ms.trade.domain.RefundRecordDTO;
+import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.RefundStatusEnum;
@@ -9,6 +13,8 @@ import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.service.BasicPayService;
 import com.sl.ms.trade.service.RefundRecordService;
 import com.sl.ms.trade.service.TradingService;
+import com.sl.transport.common.constant.Constants;
+import com.sl.transport.common.vo.TradeStatusMsg;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,8 +31,8 @@ import java.util.List;
  * @author zzj
  * @version 1.0
  */
-@Component
 @Slf4j
+@Component
 public class TradeJob {
 
     @Value("${sl.job.trading.count:100}")
@@ -38,6 +45,8 @@ public class TradeJob {
     private RefundRecordService refundRecordService;
     @Resource
     private BasicPayService basicPayService;
+    @Resource
+    private MQFeign mqFeign;
 
     /**
      * 分片广播方式查询支付状态
@@ -55,17 +64,36 @@ public class TradeJob {
             return;
         }
 
+        //定义消息通知列表，只要是状态不为【付款中】就需要通知其他系统
+        List<TradeStatusMsg> tradeMsgList = new ArrayList<>();
         for (TradingEntity trading : list) {
             if (trading.getTradingOrderNo() % shardTotal != shardIndex) {
                 continue;
             }
             try {
                 //查询交易单
-                this.basicPayService.queryTrading(trading.getTradingOrderNo());
+                TradingDTO tradingDTO = this.basicPayService.queryTrading(trading.getTradingOrderNo());
+                if (TradingStateEnum.FKZ != tradingDTO.getTradingState()) {
+                    TradeStatusMsg tradeStatusMsg = TradeStatusMsg.builder()
+                            .tradingOrderNo(trading.getTradingOrderNo())
+                            .productOrderNo(trading.getProductOrderNo())
+                            .statusCode(tradingDTO.getTradingState().getCode())
+                            .statusName(tradingDTO.getTradingState().name())
+                            .build();
+                    tradeMsgList.add(tradeStatusMsg);
+                }
             } catch (Exception e) {
                 XxlJobHelper.log("查询交易单出错！shardIndex = {}, shardTotal = {}, trading = {}", shardIndex, shardTotal, trading, e);
             }
         }
+
+        if (CollUtil.isEmpty(tradeMsgList)) {
+            return;
+        }
+
+        //发送消息通知其他系统
+        String msg = JSONUtil.toJsonStr(tradeMsgList);
+        this.mqFeign.sendMsg(Constants.MQ.Exchanges.TRADE, Constants.MQ.RoutingKeys.TRADE_UPDATE_STATUS, msg);
     }
 
     /**
@@ -83,16 +111,37 @@ public class TradeJob {
             return;
         }
 
+        //定义消息通知列表，只要是状态不为【退款中】就需要通知其他系统
+        List<TradeStatusMsg> tradeMsgList = new ArrayList<>();
+
         for (RefundRecordEntity refundRecord : list) {
             if (refundRecord.getRefundNo() % shardTotal != shardIndex) {
                 continue;
             }
             try {
                 //查询退款单
-                this.basicPayService.queryRefundTrading(refundRecord.getRefundNo());
+                RefundRecordDTO refundRecordDTO = this.basicPayService.queryRefundTrading(refundRecord.getRefundNo());
+                if (RefundStatusEnum.SENDING != refundRecordDTO.getRefundStatus()) {
+                    TradeStatusMsg tradeStatusMsg = TradeStatusMsg.builder()
+                            .tradingOrderNo(refundRecord.getTradingOrderNo())
+                            .productOrderNo(refundRecord.getProductOrderNo())
+                            .refundNo(refundRecord.getRefundNo())
+                            .statusCode(refundRecord.getRefundStatus().getCode())
+                            .statusName(refundRecord.getRefundStatus().name())
+                            .build();
+                    tradeMsgList.add(tradeStatusMsg);
+                }
             } catch (Exception e) {
                 XxlJobHelper.log("查询退款单出错！shardIndex = {}, shardTotal = {}, refundRecord = {}", shardIndex, shardTotal, refundRecord, e);
             }
         }
+
+        if (CollUtil.isEmpty(tradeMsgList)) {
+            return;
+        }
+
+        //发送消息通知其他系统
+        String msg = JSONUtil.toJsonStr(tradeMsgList);
+        this.mqFeign.sendMsg(Constants.MQ.Exchanges.TRADE, Constants.MQ.RoutingKeys.REFUND_UPDATE_STATUS, msg);
     }
 }
