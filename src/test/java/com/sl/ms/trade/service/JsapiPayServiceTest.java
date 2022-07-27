@@ -24,6 +24,7 @@ class JsapiPayServiceTest {
         JsapiPayDTO jsapiPayDTO = JSONUtil.toBean(json, JsapiPayDTO.class);
         TradingEntity tradingEntity = BeanUtil.toBean(jsapiPayDTO, TradingEntity.class);
         tradingEntity.setMemo("xxxx");
+        tradingEntity.setProductOrderNo(1551881034745602050L);
         jsapiPayService.createJsapiTrading(tradingEntity);
     }
 }
