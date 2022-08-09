@@ -137,7 +137,7 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
             throw new SLException(TradingEnum.NOT_FOUND);
         }
 
-        if (trading.getTradingState() == TradingStateEnum.YJS) {
+        if (trading.getTradingState() != TradingStateEnum.YJS) {
             throw new SLException(TradingEnum.NATIVE_REFUND_FAIL);
         }
 
