@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 支付的基础功能
@@ -55,23 +56,24 @@ public class BasicPayServiceImpl implements BasicPayService {
         this.beforePayHandler.checkQueryTrading(trading);
 
         String key = TradingCacheConstant.QUERY_PAY + tradingOrderNo;
-        RLock lock = redissonClient.getLock(key);
+        RLock lock = redissonClient.getFairLock(key);
         try {
-            //锁定
-            lock.lock();
-
-            //选取不同的支付渠道实现
-            BasicPayHandler handler = HandlerFactory.get(trading.getTradingChannel(), BasicPayHandler.class);
-            Boolean result = handler.queryTrading(trading);
-            if (result) {
-                //如果交易单已经完成，需要将二维码数据删除，节省数据库空间，如果有需要可以再次生成
-                if (ObjectUtil.equalsAny(trading.getTradingState(), TradingStateEnum.YJS, TradingStateEnum.QXDD)) {
-                    trading.setQrCode("");
+            //获取锁
+            if (lock.tryLock(TradingCacheConstant.REDIS_WAIT_TIME, TimeUnit.SECONDS)) {
+                //选取不同的支付渠道实现
+                BasicPayHandler handler = HandlerFactory.get(trading.getTradingChannel(), BasicPayHandler.class);
+                Boolean result = handler.queryTrading(trading);
+                if (result) {
+                    //如果交易单已经完成，需要将二维码数据删除，节省数据库空间，如果有需要可以再次生成
+                    if (ObjectUtil.equalsAny(trading.getTradingState(), TradingStateEnum.YJS, TradingStateEnum.QXDD)) {
+                        trading.setQrCode("");
+                    }
+                    //更新数据
+                    this.tradingService.saveOrUpdate(trading);
                 }
-                //更新数据
-                this.tradingService.saveOrUpdate(trading);
+                return BeanUtil.toBean(trading, TradingDTO.class);
             }
-            return BeanUtil.toBean(trading, TradingDTO.class);
+            throw new SLException(TradingEnum.NATIVE_QUERY_FAIL);
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {
@@ -94,29 +96,30 @@ public class BasicPayServiceImpl implements BasicPayService {
         this.beforePayHandler.checkRefundTrading(trading);
 
         String key = TradingCacheConstant.REFUND_PAY + tradingOrderNo;
-        RLock lock = redissonClient.getLock(key);
+        RLock lock = redissonClient.getFairLock(key);
         try {
-            //锁定
-            lock.lock();
+            //获取锁
+            if (lock.tryLock(TradingCacheConstant.REDIS_WAIT_TIME, TimeUnit.SECONDS)) {
+                //幂等性的检查
+                RefundRecordEntity refundRecord = this.beforePayHandler.idempotentRefundTrading(trading, refundAmount);
+                if (null == refundRecord) {
+                    return false;
+                }
 
-            //幂等性的检查
-            RefundRecordEntity refundRecord = this.beforePayHandler.idempotentRefundTrading(trading, refundAmount);
-            if (null == refundRecord) {
-                return false;
+                //选取不同的支付渠道实现
+                BasicPayHandler handler = HandlerFactory.get(refundRecord.getTradingChannel(), BasicPayHandler.class);
+                Boolean result = handler.refundTrading(refundRecord);
+                if (result) {
+                    //更新退款记录数据
+                    this.refundRecordService.saveOrUpdate(refundRecord);
+
+                    //设置交易单是退款订单
+                    trading.setIsRefund(Constants.YES);
+                    this.tradingService.saveOrUpdate(trading);
+                }
+                return true;
             }
-
-            //选取不同的支付渠道实现
-            BasicPayHandler handler = HandlerFactory.get(refundRecord.getTradingChannel(), BasicPayHandler.class);
-            Boolean result = handler.refundTrading(refundRecord);
-            if (result) {
-                //更新退款记录数据
-                this.refundRecordService.saveOrUpdate(refundRecord);
-
-                //设置交易单是退款订单
-                trading.setIsRefund(Constants.YES);
-                this.tradingService.saveOrUpdate(trading);
-            }
-            return true;
+            throw new SLException(TradingEnum.NATIVE_QUERY_FAIL);
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {
@@ -135,19 +138,21 @@ public class BasicPayServiceImpl implements BasicPayService {
         this.beforePayHandler.checkQueryRefundTrading(refundRecord);
 
         String key = TradingCacheConstant.REFUND_QUERY_PAY + refundNo;
-        RLock lock = redissonClient.getLock(key);
+        RLock lock = redissonClient.getFairLock(key);
         try {
-            //锁定
-            lock.lock();
+            //获取锁
+            if (lock.tryLock(TradingCacheConstant.REDIS_WAIT_TIME, TimeUnit.SECONDS)) {
 
-            //选取不同的支付渠道实现
-            BasicPayHandler handler = HandlerFactory.get(refundRecord.getTradingChannel(), BasicPayHandler.class);
-            Boolean result = handler.queryRefundTrading(refundRecord);
-            if (result) {
-                //更新数据
-                this.refundRecordService.saveOrUpdate(refundRecord);
+                //选取不同的支付渠道实现
+                BasicPayHandler handler = HandlerFactory.get(refundRecord.getTradingChannel(), BasicPayHandler.class);
+                Boolean result = handler.queryRefundTrading(refundRecord);
+                if (result) {
+                    //更新数据
+                    this.refundRecordService.saveOrUpdate(refundRecord);
+                }
+                return BeanUtil.toBean(refundRecord, RefundRecordDTO.class);
             }
-            return BeanUtil.toBean(refundRecord, RefundRecordDTO.class);
+            throw new SLException(TradingEnum.REFUND_FAIL);
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {

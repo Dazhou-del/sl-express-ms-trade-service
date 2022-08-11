@@ -23,6 +23,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Native支付方式Face接口：商户生成二维码，用户扫描支付
@@ -67,31 +68,32 @@ public class NativePayServiceImpl implements NativePayService {
         //对交易订单加锁
         Long productOrderNo = tradingEntity.getProductOrderNo();
         String key = TradingCacheConstant.CREATE_PAY + productOrderNo;
-        RLock lock = redissonClient.getLock(key);
+        RLock lock = redissonClient.getFairLock(key);
         try {
-            //锁定
-            lock.lock();
+            //获取锁
+            if (lock.tryLock(TradingCacheConstant.REDIS_WAIT_TIME, TimeUnit.SECONDS)) {
+                //交易前置处理：幂等性处理
+                this.beforePayHandler.idempotentCreateTrading(tradingEntity);
 
-            //交易前置处理：幂等性处理
-            this.beforePayHandler.idempotentCreateTrading(tradingEntity);
+                //调用不同的支付渠道进行处理
+                PayChannelEnum payChannel = PayChannelEnum.valueOf(tradingEntity.getTradingChannel());
+                NativePayHandler nativePayHandler = HandlerFactory.get(payChannel, NativePayHandler.class);
+                nativePayHandler.createDownLineTrading(tradingEntity);
 
-            //调用不同的支付渠道进行处理
-            PayChannelEnum payChannel = PayChannelEnum.valueOf(tradingEntity.getTradingChannel());
-            NativePayHandler nativePayHandler = HandlerFactory.get(payChannel, NativePayHandler.class);
-            nativePayHandler.createDownLineTrading(tradingEntity);
+                //生成统一收款二维码
+                String placeOrderMsg = tradingEntity.getPlaceOrderMsg();
+                String qrCode = this.qrCodeService.generate(placeOrderMsg, payChannel);
+                tradingEntity.setQrCode(qrCode);
 
-            //生成统一收款二维码
-            String placeOrderMsg = tradingEntity.getPlaceOrderMsg();
-            String qrCode = this.qrCodeService.generate(placeOrderMsg, payChannel);
-            tradingEntity.setQrCode(qrCode);
+                //新增或更新交易数据
+                flag = this.tradingService.saveOrUpdate(tradingEntity);
+                if (!flag) {
+                    throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
+                }
 
-            //新增或更新交易数据
-            flag = this.tradingService.saveOrUpdate(tradingEntity);
-            if (!flag) {
-                throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
+                return tradingEntity;
             }
-
-            return tradingEntity;
+            throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {

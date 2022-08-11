@@ -17,6 +17,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -42,25 +43,27 @@ public class JsapiPayServiceImpl implements JsapiPayService {
         //对交易订单加锁
         Long productOrderNo = tradingEntity.getProductOrderNo();
         String key = TradingCacheConstant.CREATE_PAY + productOrderNo;
-        RLock lock = redissonClient.getLock(key);
+        RLock lock = redissonClient.getFairLock(key);
         try {
-            //锁定
-            lock.lock();
+            //获取锁
+            if (lock.tryLock(TradingCacheConstant.REDIS_WAIT_TIME, TimeUnit.SECONDS)) {
 
-            //交易前置处理：幂等性处理
-            this.beforePayHandler.idempotentCreateTrading(tradingEntity);
+                //交易前置处理：幂等性处理
+                this.beforePayHandler.idempotentCreateTrading(tradingEntity);
 
-            //调用不同的支付渠道进行处理
-            JsapiPayHandler jsapiPayHandler = HandlerFactory.get(tradingEntity.getTradingChannel(), JsapiPayHandler.class);
-            jsapiPayHandler.createJsapiTrading(tradingEntity);
+                //调用不同的支付渠道进行处理
+                JsapiPayHandler jsapiPayHandler = HandlerFactory.get(tradingEntity.getTradingChannel(), JsapiPayHandler.class);
+                jsapiPayHandler.createJsapiTrading(tradingEntity);
 
-            //新增或更新交易数据
-            flag = this.tradingService.saveOrUpdate(tradingEntity);
-            if (!flag) {
-                throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
+                //新增或更新交易数据
+                flag = this.tradingService.saveOrUpdate(tradingEntity);
+                if (!flag) {
+                    throw new SLException(TradingEnum.SAVE_OR_UPDATE_FAIL);
+                }
+
+                return tradingEntity;
             }
-
-            return tradingEntity;
+            throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         } catch (SLException e) {
             throw e;
         } catch (Exception e) {
