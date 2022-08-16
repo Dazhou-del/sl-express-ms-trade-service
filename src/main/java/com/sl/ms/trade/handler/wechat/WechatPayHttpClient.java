@@ -79,7 +79,7 @@ public class WechatPayHttpClient {
      * @description 构建CloseableHttpClient远程请求对象
      * @return: org.apache.http.impl.client.CloseableHttpClient
      */
-    private CloseableHttpClient createHttpClient() throws Exception {
+    public CloseableHttpClient createHttpClient() throws Exception {
         // 加载商户私钥（privateKey：私钥字符串）
         PrivateKey merchantPrivateKey = PemUtil
                 .loadPrivateKey(new ByteArrayInputStream(privateKey.getBytes("utf-8")));
