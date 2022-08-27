@@ -15,12 +15,14 @@ import com.sl.ms.trade.handler.alipay.AlipayConfig;
 import com.sl.ms.trade.handler.wechat.WechatPayHttpClient;
 import com.sl.ms.trade.service.NotifyService;
 import com.sl.ms.trade.service.TradingService;
-import com.sl.ms.trade.util.WeiXinAesUtil;
 import com.sl.transport.common.constant.Constants;
 import com.sl.transport.common.exception.SLException;
 import com.sl.transport.common.vo.TradeStatusMsg;
 import com.wechat.pay.contrib.apache.httpclient.auth.Verifier;
 import com.wechat.pay.contrib.apache.httpclient.cert.CertificatesManager;
+import com.wechat.pay.contrib.apache.httpclient.notification.Notification;
+import com.wechat.pay.contrib.apache.httpclient.notification.NotificationHandler;
+import com.wechat.pay.contrib.apache.httpclient.notification.NotificationRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -52,16 +54,11 @@ public class NotifyServiceImpl implements NotifyService {
     private MQFeign mqFeign;
 
     @Override
-    public void wxPayNotify(String msg, Long enterpriseId, String signature, String serialNo, String signStr) throws SLException {
-        // 解析数据
-        JSONObject jsonObject = JSONUtil.parseObj(msg);
-        if (!StrUtil.equals("TRANSACTION.SUCCESS", jsonObject.getStr("event_type"))) {
-            //非成功请求直接返回，理论上都是成功的请求
-            return;
-        }
+    public void wxPayNotify(NotificationRequest request, Long enterpriseId) throws SLException {
         // 查询配置
         WechatPayHttpClient client = WechatPayHttpClient.get(enterpriseId);
 
+        JSONObject jsonData;
 
         //验证签名，确保请求来自微信
         try {
@@ -70,31 +67,20 @@ public class NotifyServiceImpl implements NotifyService {
 
             CertificatesManager certificatesManager = CertificatesManager.getInstance();
             Verifier verifier = certificatesManager.getVerifier(client.getMchId());
-            boolean verify = verifier.verify(serialNo, signStr.getBytes(StandardCharsets.UTF_8), signature);
-            if (!verify) {
-                throw new SLException("验签失败");
+
+            //验签和解析请求数据
+            NotificationHandler notificationHandler = new NotificationHandler(verifier, client.getApiV3Key().getBytes(StandardCharsets.UTF_8));
+            Notification notification = notificationHandler.parse(request);
+
+            if (!StrUtil.equals("TRANSACTION.SUCCESS", notification.getEventType())) {
+                //非成功请求直接返回，理论上都是成功的请求
+                return;
             }
+
+            //获取解密后的数据
+            jsonData = JSONUtil.parseObj(notification.getDecryptData());
         } catch (Exception e) {
-            throw new SLException("没有查询到证书");
-        }
-
-        //实例化aes工具类
-        WeiXinAesUtil weiXinAesUtil = new WeiXinAesUtil(client.getApiV3Key().getBytes(StandardCharsets.UTF_8));
-
-        //附加数据
-        byte[] associatedData = jsonObject.getByPath("resource.associated_data", String.class).getBytes(StandardCharsets.UTF_8);
-        //随机串
-        byte[] nonce = jsonObject.getByPath("resource.nonce", String.class).getBytes(StandardCharsets.UTF_8);
-        //数据密文
-        String ciphertext = jsonObject.getByPath("resource.ciphertext", String.class);
-
-        JSONObject jsonData;
-        try {
-            //解密
-            String data = weiXinAesUtil.decryptToString(associatedData, nonce, ciphertext);
-            jsonData = JSONUtil.parseObj(data);
-        } catch (Exception e) {
-            throw new SLException("解密失败");
+            throw new SLException("验签失败");
         }
 
         if (!StrUtil.equals(jsonData.getStr("trade_state"), TradingConstant.WECHAT_TRADE_SUCCESS)) {
