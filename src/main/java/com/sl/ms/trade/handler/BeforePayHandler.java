@@ -1,7 +1,5 @@
 package com.sl.ms.trade.handler;
 
-import com.sl.ms.trade.domain.RefundRecordDTO;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.transport.common.exception.SLException;
@@ -31,7 +29,6 @@ public interface BeforePayHandler {
     /***
      * QueryTrading交易单参数校验
      * @param trading 交易订单
-     * @return 是否符合要求
      */
     void checkQueryTrading(TradingEntity trading);
 

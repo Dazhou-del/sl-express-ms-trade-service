@@ -1,6 +1,5 @@
 package com.sl.ms.trade.handler;
 
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.TradingEntity;
 
 /**

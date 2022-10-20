@@ -1,7 +1,6 @@
 package com.sl.ms.trade.controller;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.domain.request.JsapiPayDTO;
 import com.sl.ms.trade.domain.response.JsapiPayResponseDTO;
 import com.sl.ms.trade.entity.TradingEntity;
@@ -9,7 +8,6 @@ import com.sl.ms.trade.service.JsapiPayService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

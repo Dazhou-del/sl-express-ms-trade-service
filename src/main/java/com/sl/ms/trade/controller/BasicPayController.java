@@ -65,7 +65,7 @@ public class BasicPayController {
     /***
      * 统一收单交易退款查询接口
      * @param refundNo 退款交易单号
-     * @return
+     * @return 退款记录
      */
     @PostMapping("refund/{refundNo}")
     @ApiOperation(value = "查询统一收单交易退款", notes = "查询统一收单交易退款")

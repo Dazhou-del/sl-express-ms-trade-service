@@ -1,7 +1,5 @@
 package com.sl.ms.trade.handler;
 
-import com.sl.ms.trade.domain.RefundRecordDTO;
-import com.sl.ms.trade.domain.TradingDTO;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.transport.common.exception.SLException;

@@ -10,7 +10,6 @@ import com.alipay.easysdk.payment.common.models.AlipayTradeCloseResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeFastpayRefundQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
-import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;

@@ -1,13 +1,11 @@
 package com.sl.ms.trade.handler.alipay;
 
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alipay.easysdk.factory.Factory;
 import com.alipay.easysdk.kernel.Config;
 import com.alipay.easysdk.kernel.util.ResponseChecker;
 import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
-import com.sl.ms.trade.constant.Constants;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;

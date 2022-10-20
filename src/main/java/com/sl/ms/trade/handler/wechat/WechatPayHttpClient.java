@@ -11,7 +11,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.PayChannelEntity;
-import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
 import com.sl.ms.trade.service.PayChannelService;
@@ -77,7 +76,7 @@ public class WechatPayHttpClient {
 
     /***
      * @description 构建CloseableHttpClient远程请求对象
-     * @return: org.apache.http.impl.client.CloseableHttpClient
+     * @return {@link org.apache.http.impl.client.CloseableHttpClient}
      */
     public CloseableHttpClient createHttpClient() throws Exception {
         // 加载商户私钥（privateKey：私钥字符串）
@@ -123,8 +122,7 @@ public class WechatPayHttpClient {
      * @description 支持get请求的远程调用
      * @param apiPath api地址
      * @param params 在路径中请求的参数
-     * @return
-     * @return: 返回字符串
+     * @return 返回字符串
      */
     public WeChatResponse doGet(String apiPath, Map<String, Object> params) throws Exception {
         URI uri = UrlBuilder.create()
@@ -140,8 +138,7 @@ public class WechatPayHttpClient {
     /***
      * @description 支持get请求的远程调用
      * @param apiPath api地址
-     * @return
-     * @return: 返回字符串
+     * @return 返回字符串
      */
     public WeChatResponse doGet(String apiPath) throws Exception {
         URI uri = UrlBuilder.create()

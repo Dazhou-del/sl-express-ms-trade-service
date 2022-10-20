@@ -5,7 +5,6 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
-import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.RefundStatusEnum;
@@ -86,11 +85,8 @@ public class BeforePayHandlerImpl implements BeforePayHandler {
             return false;
         }
 
-        if (NumberUtil.isLessOrEqual(tradingEntity.getTradingAmount(), BigDecimal.valueOf(0))) {
-            //金额不能小于等于0
-            return false;
-        }
-        return true;
+        //金额不能小于等于0
+        return !NumberUtil.isLessOrEqual(tradingEntity.getTradingAmount(), BigDecimal.valueOf(0));
     }
 
     @Override
