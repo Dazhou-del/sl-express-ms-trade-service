@@ -21,7 +21,7 @@ public class HandlerFactory {
         for (Map.Entry<String, T> entry : beans.entrySet()) {
             PayChannel payChannelAnnotation = entry.getValue().getClass().getAnnotation(PayChannel.class);
             if (ObjectUtil.isNotEmpty(payChannelAnnotation) && ObjectUtil.equal(payChannel, payChannelAnnotation.type())) {
-                return (T) entry.getValue();
+                return entry.getValue();
             }
         }
         return null;
