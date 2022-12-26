@@ -1,7 +1,6 @@
 package com.sl.ms.trade.controller;
 
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.json.JSONUtil;
 import com.sl.ms.trade.service.NotifyService;
 import com.sl.transport.common.exception.SLException;
 import com.wechat.pay.contrib.apache.httpclient.notification.NotificationRequest;
@@ -41,7 +40,7 @@ public class NotifyController {
      * @return 正常响应200，否则响应500
      */
     @PostMapping("wx/{enterpriseId}")
-    public ResponseEntity<String> wxPayNotify(HttpEntity<String> httpEntity, @PathVariable("enterpriseId") Long enterpriseId) {
+    public ResponseEntity<Object> wxPayNotify(HttpEntity<String> httpEntity, @PathVariable("enterpriseId") Long enterpriseId) {
         try {
             //获取请求头
             HttpHeaders headers = httpEntity.getHeaders();
@@ -64,9 +63,9 @@ public class NotifyController {
                     .put("message", e.getMsg())
                     .build();
             //响应500
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(JSONUtil.toJsonStr(result));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
-        return ResponseEntity.ok("success");
+        return ResponseEntity.ok(null);
     }
 
     /**
