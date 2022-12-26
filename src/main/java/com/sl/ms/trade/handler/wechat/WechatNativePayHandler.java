@@ -11,11 +11,9 @@ import com.sl.ms.trade.enums.TradingEnum;
 import com.sl.ms.trade.enums.TradingStateEnum;
 import com.sl.ms.trade.handler.NativePayHandler;
 import com.sl.ms.trade.handler.wechat.response.WeChatResponse;
-import com.sl.ms.trade.service.PayChannelService;
 import com.sl.transport.common.exception.SLException;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.Map;
 
 /**
@@ -27,9 +25,6 @@ import java.util.Map;
 @Component("wechatNativePayHandler")
 @PayChannel(type = PayChannelEnum.WECHAT_PAY)
 public class WechatNativePayHandler implements NativePayHandler {
-
-    @Resource
-    private PayChannelService payChannelService;
 
     @Override
     public void createDownLineTrading(TradingEntity tradingEntity) throws SLException {

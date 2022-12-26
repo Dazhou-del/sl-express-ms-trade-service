@@ -75,8 +75,8 @@ public class WechatPayHttpClient {
     }
 
     /***
-     * @description 构建CloseableHttpClient远程请求对象
-     * @return {@link org.apache.http.impl.client.CloseableHttpClient}
+     * 构建CloseableHttpClient远程请求对象
+     * @return {@link CloseableHttpClient}
      */
     public CloseableHttpClient createHttpClient() throws Exception {
         // 加载商户私钥（privateKey：私钥字符串）
@@ -100,7 +100,7 @@ public class WechatPayHttpClient {
     }
 
     /***
-     * @description 支持post请求的远程调用
+     * 支持post请求的远程调用
      * @param apiPath api地址
      * @param params 携带请求参数
      * @return 返回字符串
@@ -119,7 +119,7 @@ public class WechatPayHttpClient {
     }
 
     /***
-     * @description 支持get请求的远程调用
+     * 支持get请求的远程调用
      * @param apiPath api地址
      * @param params 在路径中请求的参数
      * @return 返回字符串
@@ -136,7 +136,7 @@ public class WechatPayHttpClient {
     }
 
     /***
-     * @description 支持get请求的远程调用
+     * 支持get请求的远程调用
      * @param apiPath api地址
      * @return 返回字符串
      */
