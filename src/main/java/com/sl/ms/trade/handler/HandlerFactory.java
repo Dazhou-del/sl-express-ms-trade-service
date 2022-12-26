@@ -1,8 +1,6 @@
 package com.sl.ms.trade.handler;
 
-import cn.hutool.core.annotation.AnnotationUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.enums.PayChannelEnum;
@@ -10,8 +8,7 @@ import com.sl.ms.trade.enums.PayChannelEnum;
 import java.util.Map;
 
 /**
- * @author zzj
- * @version 1.0
+ * Handler工厂，用于获取指定类型的具体渠道的实例对象
  */
 public class HandlerFactory {
 
