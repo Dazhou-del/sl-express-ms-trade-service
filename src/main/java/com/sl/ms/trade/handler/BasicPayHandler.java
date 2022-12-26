@@ -10,7 +10,7 @@ import com.sl.transport.common.exception.SLException;
  * @author zzj
  * @version 1.0
  */
-public interface BasicPayHandler extends PayChannelHandler {
+public interface BasicPayHandler {
 
     /***
      * 统一收单线下交易查询

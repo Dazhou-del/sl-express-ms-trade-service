@@ -8,7 +8,7 @@ import com.sl.ms.trade.entity.TradingEntity;
  * @author zzj
  * @version 1.0
  */
-public interface JsapiPayHandler extends PayChannelHandler {
+public interface JsapiPayHandler {
 
     /**
      * 创建交易

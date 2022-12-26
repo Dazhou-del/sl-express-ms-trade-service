@@ -7,6 +7,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
@@ -32,6 +33,7 @@ import static com.sl.ms.trade.enums.TradingEnum.*;
  */
 @Slf4j
 @Component("weChatBasicPayHandler")
+@PayChannel(type = PayChannelEnum.WECHAT_PAY)
 public class WeChatBasicPayHandler implements BasicPayHandler {
 
     @Override
@@ -189,10 +191,5 @@ public class WeChatBasicPayHandler implements BasicPayHandler {
             return true;
         }
         throw new SLException(response.getBody(), NATIVE_QUERY_REFUND_FAIL.getCode(), NATIVE_QUERY_REFUND_FAIL.getStatus());
-    }
-
-    @Override
-    public PayChannelEnum payChannel() {
-        return PayChannelEnum.WECHAT_PAY;
     }
 }

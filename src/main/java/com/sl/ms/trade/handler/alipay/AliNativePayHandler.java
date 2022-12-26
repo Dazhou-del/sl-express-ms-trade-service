@@ -6,6 +6,7 @@ import com.alipay.easysdk.factory.Factory;
 import com.alipay.easysdk.kernel.Config;
 import com.alipay.easysdk.kernel.util.ResponseChecker;
 import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
+import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component("aliNativePayHandler")
+@PayChannel(type = PayChannelEnum.ALI_PAY)
 public class AliNativePayHandler implements NativePayHandler {
 
     @Override
@@ -56,12 +58,6 @@ public class AliNativePayHandler implements NativePayHandler {
             return;
         }
         throw new SLException(JSONUtil.toJsonStr(response), TradingEnum.NATIVE_PAY_FAIL.getCode(), TradingEnum.NATIVE_PAY_FAIL.getStatus());
-    }
-
-
-    @Override
-    public PayChannelEnum payChannel() {
-        return PayChannelEnum.ALI_PAY;
     }
 
 }

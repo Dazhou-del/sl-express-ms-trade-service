@@ -4,6 +4,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.json.JSONUtil;
+import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
@@ -24,6 +25,7 @@ import java.util.Map;
  * @version 1.0
  */
 @Component("wechatNativePayHandler")
+@PayChannel(type = PayChannelEnum.WECHAT_PAY)
 public class WechatNativePayHandler implements NativePayHandler {
 
     @Resource
@@ -66,10 +68,5 @@ public class WechatNativePayHandler implements NativePayHandler {
         } catch (Exception e) {
             throw new SLException(TradingEnum.NATIVE_PAY_FAIL);
         }
-    }
-
-    @Override
-    public PayChannelEnum payChannel() {
-        return PayChannelEnum.WECHAT_PAY;
     }
 }

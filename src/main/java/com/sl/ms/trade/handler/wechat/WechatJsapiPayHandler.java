@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.entity.TradingEntity;
 import com.sl.ms.trade.enums.PayChannelEnum;
 import com.sl.ms.trade.enums.TradingEnum;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @version 1.0
  */
 @Component("wechatJsapiPayHandler")
+@PayChannel(type = PayChannelEnum.WECHAT_PAY)
 public class WechatJsapiPayHandler implements JsapiPayHandler {
 
     @Override
@@ -90,10 +92,10 @@ public class WechatJsapiPayHandler implements JsapiPayHandler {
     /**
      * 生成
      *
-     * @param client 微信client对象
+     * @param client    微信client对象
      * @param timeStamp 时间戳
-     * @param nonceStr 随机数
-     * @param packages 预支付字符串
+     * @param nonceStr  随机数
+     * @param packages  预支付字符串
      * @return 签名字符串
      * @throws Exception 不处理异常，全部抛出
      */
@@ -110,10 +112,5 @@ public class WechatJsapiPayHandler implements JsapiPayHandler {
                 packages);
         sign.update(message.getBytes());
         return Base64.getEncoder().encodeToString(sign.sign());
-    }
-
-    @Override
-    public PayChannelEnum payChannel() {
-        return PayChannelEnum.WECHAT_PAY;
     }
 }

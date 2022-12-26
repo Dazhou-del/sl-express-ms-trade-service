@@ -10,6 +10,7 @@ import com.alipay.easysdk.payment.common.models.AlipayTradeCloseResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeFastpayRefundQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
 import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
+import com.sl.ms.trade.annotation.PayChannel;
 import com.sl.ms.trade.constant.TradingConstant;
 import com.sl.ms.trade.entity.RefundRecordEntity;
 import com.sl.ms.trade.entity.TradingEntity;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component("aliBasicPayHandler")
+@PayChannel(type = PayChannelEnum.ALI_PAY)
 public class AliBasicPayHandler implements BasicPayHandler {
 
     @Override
@@ -157,8 +159,4 @@ public class AliBasicPayHandler implements BasicPayHandler {
         throw new SLException(refundRecord.getRefundMsg(), TradingEnum.NATIVE_REFUND_FAIL.getCode(), TradingEnum.NATIVE_REFUND_FAIL.getStatus());
     }
 
-    @Override
-    public PayChannelEnum payChannel() {
-        return PayChannelEnum.ALI_PAY;
-    }
 }
