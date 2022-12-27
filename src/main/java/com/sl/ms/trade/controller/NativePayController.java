@@ -8,6 +8,7 @@ import com.sl.ms.trade.service.NativePayService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -15,9 +16,10 @@ import javax.annotation.Resource;
 /**
  * Native支付方式Face接口：商户生成二维码，用户扫描支付
  */
-@RequestMapping("native")
+@Validated
 @RestController
 @Api(tags = "Native支付")
+@RequestMapping("native")
 public class NativePayController {
 
     @Resource
