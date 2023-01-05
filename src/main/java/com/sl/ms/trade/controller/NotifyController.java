@@ -33,7 +33,7 @@ public class NotifyController {
     private NotifyService notifyService;
 
     /**
-     * 微信支付成功回调
+     * 微信支付成功回调（成功后无需响应内容）
      *
      * @param httpEntity   微信请求信息
      * @param enterpriseId 商户id
@@ -69,7 +69,7 @@ public class NotifyController {
     }
 
     /**
-     * 支付宝支付成功回调
+     * 支付宝支付成功回调（成功后需要响应success）
      *
      * @param enterpriseId 商户id
      * @return 正常响应200，否则响应500
