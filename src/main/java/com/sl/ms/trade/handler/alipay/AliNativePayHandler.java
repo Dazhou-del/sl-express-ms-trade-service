@@ -17,8 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * @author zzj
- * @version 1.0
+ * 支付宝的扫描支付的具体实现
  */
 @Slf4j
 @Component("aliNativePayHandler")
